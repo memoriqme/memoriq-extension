@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+  <title>Memoriq</title>
+</head>
+<body>
+  <main class="popup">
+    <div class="brand">
+      <svg class="mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46.09 46.09" width="32" height="32" aria-hidden="true">
+        <rect width="46.09" height="46.09" rx="11.78" fill="#148B74"/>
+        <path fill="#fff" d="M31.36 12.5c.66 0 1.2.21 1.62.63.41.42.62.97.62 1.64v16.74c0 .65-.19 1.16-.57 1.53-.38.37-.89.56-1.51.56-.6 0-1.1-.19-1.48-.56-.38-.37-.57-.88-.57-1.53v-10.4l-4.29 7.87c-.28.51-.59.88-.92 1.12-.33.24-.73.35-1.19.35-.44 0-.84-.12-1.18-.35-.34-.24-.65-.61-.94-1.12l-4.29-7.72v10.25c0 .63-.19 1.13-.57 1.52-.38.38-.89.57-1.51.57-.6 0-1.1-.19-1.48-.56-.38-.37-.57-.88-.57-1.53V14.77c0-.67.21-1.21.62-1.64.41-.42.95-.63 1.62-.63.97 0 1.7.5 2.21 1.5l6.14 11.34 6.11-11.34c.54-1 1.27-1.5 2.18-1.5z"/>
+      </svg>
+      <strong>Memoriq</strong>
+    </div>
+
+    <div id="status" class="status">Checking connection...</div>
+
+    <section id="quickSave" class="quick-save">
+      <label class="field">
+        Preferred project
+        <select id="project">
+          <option value="">No project</option>
+        </select>
+      </label>
+
+      <label id="newProjectField" class="field hidden">
+        New project name
+        <input id="newProject" type="text" maxlength="80" placeholder="Project name">
+      </label>
+
+      <button id="saveChat" class="primary" type="button">Save current chat</button>
+      <p id="geminiNote" class="note note-provider hidden">
+        Gemini note: scroll to the top of long chats first so older messages are loaded before saving.
+      </p>
+    </section>
+
+    <button id="connect" class="primary">Connect / Log in</button>
+
+    <form id="unlockForm" class="unlock hidden">
+      <label class="field">
+        Encryption password
+        <input id="password" type="password" autocomplete="current-password" placeholder="Unlock vault">
+      </label>
+      <button class="primary" type="submit">Unlock for saving</button>
+    </form>
+
+    <details class="options">
+      <summary>Options</summary>
+
+      <section class="options-section">
+        <label class="field">
+          Save button
+          <select id="saveMode">
+            <option value="page_button">Show button on chat pages</option>
+            <option value="popup_button">Save from extension popup</option>
+          </select>
+        </label>
+
+        <p class="note">Media files may not be preserved.</p>
+      </section>
+
+      <section class="options-section">
+        <h2>Environment</h2>
+
+        <label class="field">
+          Environment
+          <select id="environment">
+            <option value="local">Local - memoriq.local</option>
+            <option value="production">Production - memoriq.me</option>
+          </select>
+        </label>
+      </section>
+
+      <div class="links">
+        <button id="openApp" type="button">Open Memoriq</button>
+        <button id="forget" type="button">Forget extension</button>
+      </div>
+    </details>
+  </main>
+  <script src="crypto.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

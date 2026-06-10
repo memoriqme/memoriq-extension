@@ -1,0 +1,11 @@
+{
+  "release": false,
+  "productionUrl": "https://memoriq.me",
+  "devEnvironments": [
+    {
+      "id": "local",
+      "label": "Local",
+      "url": "http://memoriq.local"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-extension.mjs",
+    "check": "node --check background.js && node --check connect.js && node --check content.js && node --check crypto.js && node --check extract.js && node --check popup.js"
+  }
+}

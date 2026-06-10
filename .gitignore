@@ -1,0 +1,7 @@
+dist/
+extension.config.json
+*.zip
+node_modules/
+.DS_Store
+Thumbs.db
+scripts/generate-media-kit-pngs.mjs
