@@ -3,9 +3,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outputDir = path.join(root, 'dist');
 const configPath = path.join(root, 'extension.config.json');
 const exampleConfigPath = path.join(root, 'extension.config.example.json');
+const targets = new Set(['chrome', 'firefox']);
 
 const runtimeFiles = [
   'background.js',
@@ -30,6 +30,19 @@ const CHAT_HOST_PERMISSIONS = [
   'https://x.com/i/grok*',
   'https://x.com/grok*',
 ];
+
+function parseTarget() {
+  const targetArg = process.argv.find((arg) => arg.startsWith('--target='));
+  const target = targetArg ? targetArg.split('=')[1] : 'chrome';
+
+  if (!targets.has(target)) {
+    console.error(`Unsupported target: ${target}`);
+    console.error(`Use one of: ${[...targets].join(', ')}`);
+    process.exit(1);
+  }
+
+  return target;
+}
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -171,7 +184,7 @@ function replaceConnectGuard(source, environments) {
   );
 }
 
-function buildManifest(sourceManifest, config) {
+function buildManifest(sourceManifest, config, target) {
   const manifest = {
     ...sourceManifest,
     host_permissions: [
@@ -189,6 +202,29 @@ function buildManifest(sourceManifest, config) {
       };
     }),
   };
+
+  if (target === 'firefox') {
+    manifest.background = {
+      scripts: ['background.js'],
+      type: 'module',
+    };
+    manifest.browser_specific_settings = {
+      gecko: {
+        id: 'memoriq-extension@memoriq.me',
+        strict_min_version: '140.0',
+        data_collection_permissions: {
+          required: [
+            'authenticationInfo',
+            'personalCommunications',
+            'websiteContent',
+          ],
+        },
+      },
+      gecko_android: {
+        strict_min_version: '142.0',
+      },
+    };
+  }
 
   return manifest;
 }
@@ -211,13 +247,13 @@ function buildPopupHtml(source, config) {
   );
 }
 
-async function writeRuntimeFile(file, config) {
+async function writeRuntimeFile(file, config, target, outputDir) {
   const sourcePath = path.join(root, file);
   const outputPath = path.join(outputDir, file);
 
   if (file === 'manifest.json') {
     const manifest = JSON.parse(await readFile(sourcePath, 'utf8'));
-    await writeFile(outputPath, `${JSON.stringify(buildManifest(manifest, config), null, 2)}\n`);
+    await writeFile(outputPath, `${JSON.stringify(buildManifest(manifest, config, target), null, 2)}\n`);
     return;
   }
 
@@ -239,12 +275,14 @@ async function writeRuntimeFile(file, config) {
 }
 
 const config = await loadConfig();
+const target = parseTarget();
+const outputDir = path.join(root, 'dist', target);
 
 await rm(outputDir, { force: true, recursive: true });
 await mkdir(outputDir, { recursive: true });
 
 for (const file of runtimeFiles) {
-  await writeRuntimeFile(file, config);
+  await writeRuntimeFile(file, config, target, outputDir);
 }
 
 await cp(path.join(root, 'icons'), path.join(outputDir, 'icons'), {
@@ -253,4 +291,4 @@ await cp(path.join(root, 'icons'), path.join(outputDir, 'icons'), {
 });
 
 const mode = config.release ? 'release' : 'development';
-console.log(`Built ${mode} extension in ${path.relative(root, outputDir)}`);
+console.log(`Built ${target} ${mode} extension in ${path.relative(root, outputDir)}`);

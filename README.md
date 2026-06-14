@@ -4,6 +4,7 @@ Chrome extension for saving AI conversations into Memoriq.
 
 Memoriq is a private AI memory vault for conversations from ChatGPT, Claude, Gemini, and Grok. This extension captures supported AI chat pages, encrypts the result locally in the browser, and uploads only ciphertext to the Memoriq web app.
 
+Chrome Web Store: [Memoriq](https://chromewebstore.google.com/detail/memoriq/jhhjcchhlfodciphfacegemnemmjdmci)<br>
 Extension repository: [github.com/memoriqme/memoriq-extension](https://github.com/memoriqme/memoriq-extension)<br>
 App repository: [github.com/memoriqme/memoriq](https://github.com/memoriqme/memoriq)
 
@@ -154,7 +155,7 @@ For a Chrome Web Store release build, set `"release": true`. Release builds use 
 
 ## Local Checks
 
-The extension is plain JavaScript, but you should build into `dist/` before loading it in Chrome.
+The extension is plain JavaScript, but you should build a browser-specific `dist/` folder before loading it.
 
 Run syntax checks:
 
@@ -162,13 +163,26 @@ Run syntax checks:
 npm run check
 ```
 
-Build:
+Build for Chrome:
 
 ```bash
 npm run build
 ```
 
-- `dist/` is the folder to load unpacked in Chrome.
+Build for Firefox:
+
+```bash
+npm run build:firefox
+```
+
+Build both browser targets:
+
+```bash
+npm run build:all
+```
+
+- `dist/chrome/` is the folder to load unpacked in Chrome.
+- `dist/firefox/` is the folder to load as a temporary add-on in Firefox.
 - Development builds keep the environments listed in `extension.config.json`.
 - Release builds target production only.
 

@@ -23,6 +23,22 @@ function environmentForBaseUrl(appBaseUrl) {
   return Object.entries(BASE_URLS).find(([, value]) => value === appBaseUrl)?.[0] || null;
 }
 
+function supportsSessionStorage() {
+  return Boolean(chrome.storage.session?.get);
+}
+
+async function extensionState() {
+  const localState = await chrome.storage.local.get(['environment', 'appBaseUrl', 'token', 'mekJwk', 'saveMode']);
+  const sessionState = supportsSessionStorage()
+    ? await chrome.storage.session.get(['mekJwk'])
+    : {};
+
+  return {
+    ...localState,
+    mekJwk: supportsSessionStorage() ? sessionState.mekJwk : localState.mekJwk,
+  };
+}
+
 if (chrome.storage.session?.setAccessLevel) {
   chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' }).catch(() => {});
 }
@@ -43,13 +59,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message?.type === 'GET_MEMORIQ_STATE') {
+    extensionState()
+      .then((state) => sendResponse({ ok: true, state }))
+      .catch((error) => sendResponse({ ok: false, error: error.message }));
+    return true;
+  }
+
   if (message?.type === 'SAVE_MEMORIQ_CONVERSATION') {
     if (!isSupportedChatUrl(urlFromSender(sender))) {
       sendResponse({ ok: false, error: 'Invalid chat page.' });
       return false;
     }
 
-    chrome.storage.local.get(['environment', 'appBaseUrl', 'token']).then(async (state) => {
+    extensionState().then(async (state) => {
       const appBaseUrl = BASE_URLS[state.environment] || (ALLOWED_APP_BASE_URLS.has(state.appBaseUrl) ? state.appBaseUrl : BASE_URLS.production);
 
       try {

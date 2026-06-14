@@ -521,16 +521,17 @@ async function serializeContentHtml(contentEl, { preserveNewlines = false } = {}
   absolutizeUrls(clone);
   await inlineBlobImages(clone);
   if (preserveNewlines) preserveLineBreaks(clone);
+  const text = cleanText(clone.innerText || clone.textContent || contentEl.innerText || contentEl.textContent);
   const html = clone.innerHTML.trim();
-  return html || null;
+  return {
+    html: html || null,
+    text,
+  };
 }
 
 async function buildMessage(role, contentEl) {
-  const html = await serializeContentHtml(contentEl, { preserveNewlines: role === 'user' });
-  const documentRef = document.implementation.createHTMLDocument('');
-  const container = documentRef.createElement('div');
-  container.innerHTML = html || '';
-  const content = cleanText(container.innerText || container.textContent || contentEl.innerText || contentEl.textContent);
+  const { html, text } = await serializeContentHtml(contentEl, { preserveNewlines: role === 'user' });
+  const content = text || cleanText(contentEl.innerText || contentEl.textContent);
 
   if (!content && !html) return null;
 

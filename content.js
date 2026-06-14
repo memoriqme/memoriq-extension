@@ -430,15 +430,9 @@ async function state() {
   }
 
   try {
-    const [localState, sessionState] = await Promise.all([
-      chrome.storage.local.get(['environment', 'appBaseUrl', 'token', 'saveMode']),
-      chrome.storage.session.get(['mekJwk']),
-    ]);
-
-    return {
-      ...localState,
-      mekJwk: sessionState.mekJwk,
-    };
+    const response = await chrome.runtime.sendMessage({ type: 'GET_MEMORIQ_STATE' });
+    if (!response?.ok) throw new Error(response?.error || 'Could not read extension state.');
+    return response.state || {};
   } catch (error) {
     throw extensionContextError(error);
   }

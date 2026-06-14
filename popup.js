@@ -27,19 +27,48 @@ function setStatus(text, mode = '') {
   statusEl.className = `status ${mode}`.trim();
 }
 
+function supportsSessionStorage() {
+  return Boolean(chrome.storage.session?.get);
+}
+
+async function getSessionState(keys) {
+  if (!supportsSessionStorage()) return {};
+  return chrome.storage.session.get(keys);
+}
+
+async function setUnlockedKey(mekJwk) {
+  if (!supportsSessionStorage()) {
+    await chrome.storage.local.set({ mekJwk });
+    return;
+  }
+
+  await chrome.storage.local.remove('mekJwk');
+  await chrome.storage.session.set({ mekJwk });
+}
+
+async function clearUnlockedKey() {
+  const operations = [chrome.storage.local.remove('mekJwk')];
+
+  if (supportsSessionStorage()) {
+    operations.push(chrome.storage.session.remove(['mekJwk']));
+  }
+
+  await Promise.all(operations);
+}
+
 async function getState() {
   const [localState, sessionState] = await Promise.all([
     chrome.storage.local.get(['environment', 'appBaseUrl', 'token', 'user', 'mekJwk', 'saveMode', 'preferredProject']),
-    chrome.storage.session.get(['mekJwk']),
+    getSessionState(['mekJwk']),
   ]);
 
-  if (localState.mekJwk) {
+  if (supportsSessionStorage() && localState.mekJwk) {
     await chrome.storage.local.remove('mekJwk');
   }
 
   return {
     ...localState,
-    mekJwk: sessionState.mekJwk,
+    mekJwk: supportsSessionStorage() ? sessionState.mekJwk : localState.mekJwk,
   };
 }
 
@@ -222,8 +251,8 @@ openAppBtn.addEventListener('click', async () => {
 
 forgetBtn.addEventListener('click', async () => {
   await Promise.all([
-    chrome.storage.local.remove(['token', 'user', 'mekJwk']),
-    chrome.storage.session.remove(['mekJwk']),
+    chrome.storage.local.remove(['token', 'user']),
+    clearUnlockedKey(),
   ]);
   await refresh();
 });
@@ -280,8 +309,7 @@ unlockForm.addEventListener('submit', async (event) => {
     const data = await api('/api/user/encryption-key');
     const mek = await MemoriqCrypto.unwrapMEK(passwordInput.value, data.salt, data.keyData);
     const mekJwk = await MemoriqCrypto.exportMEK(mek);
-    await chrome.storage.local.remove('mekJwk');
-    await chrome.storage.session.set({ mekJwk });
+    await setUnlockedKey(mekJwk);
     passwordInput.value = '';
     await refresh();
   } catch (error) {
